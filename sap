@@ -1,0 +1,107 @@
+#!/bin/bash
+
+# File paths
+ERROR_LOG="errorlogs.txt"
+GITHUB_FILE_URL="https://raw.githubusercontent.com/sudnyesh-nehare/sap-tool/main/errorlogs.txt"
+DEBUG_LOG="debug.log"  # Log file for debugging purposes
+
+# Initialize the error log file if it doesn't exist
+if [ ! -f "$ERROR_LOG" ]; then
+    touch "$ERROR_LOG"
+fi
+
+# Initialize the debug log file
+if [ ! -f "$DEBUG_LOG" ]; then
+    touch "$DEBUG_LOG"
+fi
+
+# Function to update the SAP tool by fetching the file from GitHub
+function update_sap() {
+    echo "Updating SAP tool..."
+    
+    # Fetch the file from GitHub
+    curl -s -o "$ERROR_LOG" "$GITHUB_FILE_URL"
+    
+    # Convert file to Unix format (if necessary)
+    dos2unix "$ERROR_LOG"
+    
+    echo "SAP tool updated."
+    read -p "Press [Enter] to return to the menu."
+}
+
+# Function to handle Password Breach Checker
+function password_breach_checker() {
+    echo "Enter the password to check:"
+    read -r entered_password
+
+    # Encrypt the entered password using SHA-256
+    encrypted_password=$(echo -n "$entered_password" | sha256sum | awk '{print $1}')
+    
+    # Initialize variables
+    found=false
+   
+
+    # Check if the encrypted password is in the file
+    while IFS= read -r line; do
+        # Remove any trailing newline, carriage return, or spaces
+        cleaned_line=$(echo "$line" | tr -d '\r' | xargs)
+        
+        # Log the comparison for debugging purposes
+        
+        
+        if [ "$cleaned_line" == "$encrypted_password" ]; then
+            echo "Password found!"
+            found=true
+            break
+        fi
+    done < "$ERROR_LOG"
+
+    if [ "$found" == false ]; then
+        echo "Password not found."
+    fi
+
+    
+    read -p "Press [Enter] to return to the menu."
+}
+
+# Function to handle Encryption (Placeholder)
+function encryption() {
+    echo "Encryption tool is not implemented yet."
+    read -p "Press [Enter] to return to the menu."
+}
+
+# Function to show the menu
+function show_menu() {
+    clear
+    echo "Welcome to the SAP tool!"
+    
+    # Check if the file exists and fetch the last updated date
+    if [ -f "$ERROR_LOG" ]; then
+        last_update=$(stat -c %y "$ERROR_LOG" 2>/dev/null)
+    else
+        last_update="N/A"
+    fi
+
+    echo "Last updated on: $last_update"
+    echo
+    echo "Select an option:"
+    echo "1. Password Breach Checker"
+    echo "2. Encryption"
+    echo "3. Update SAP Tool"
+    echo "4. Exit"
+    echo
+    read -p "Enter your choice [1-4]: " choice
+    case $choice in
+        1) password_breach_checker ;;
+        2) encryption ;;
+        3) update_sap ;;
+        4) exit 0 ;;
+        *) echo "Invalid option. Please select 1, 2, 3, or 4." ;;
+    esac
+}
+
+# Main loop
+while true; do
+    show_menu
+done
+
